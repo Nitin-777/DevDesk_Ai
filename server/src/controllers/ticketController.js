@@ -17,6 +17,22 @@ const canAccessTicket = (user, ticket) => {
   return false;
 };
 
+const canReplyToTicket = (user, ticket) => {
+  if (ticket.status === "closed") return false;
+
+  if (user.role === "admin") return true;
+
+  if (user.role === "customer") {
+    return ticket.customer._id.toString() === user._id.toString();
+  }
+
+  if (user.role === "agent" && ticket.assignedAgent) {
+    return ticket.assignedAgent._id.toString() === user._id.toString();
+  }
+
+  return false;
+};
+
 exports.createTicket = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -284,6 +300,84 @@ exports.updateTicketStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Ticket status update failed",
+      error: error.message,
+    });
+  }
+};
+
+exports.addReply = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: errors.array(),
+      });
+    }
+
+    const { message, isInternalNote } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid ticket ID",
+      });
+    }
+
+    const ticket = await Ticket.findById(req.params.id)
+      .populate("customer", "name email role")
+      .populate("assignedAgent", "name email role")
+      .populate("replies.sender", "name email role");
+
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: "Ticket not found",
+      });
+    }
+
+    if (!canReplyToTicket(req.user, ticket)) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to reply to this ticket",
+      });
+    }
+
+    if (req.user.role === "customer" && isInternalNote) {
+      return res.status(403).json({
+        success: false,
+        message: "Customers cannot create internal notes",
+      });
+    }
+
+    ticket.replies.push({
+      sender: req.user._id,
+      message,
+      isInternalNote: Boolean(isInternalNote),
+    });
+
+    if (ticket.status === "open" && req.user.role !== "customer") {
+      ticket.status = "in-progress";
+    }
+
+    await ticket.save();
+
+    const updatedTicket = await Ticket.findById(ticket._id)
+      .populate("customer", "name email role")
+      .populate("assignedAgent", "name email role")
+      .populate("replies.sender", "name email role");
+
+    res.status(201).json({
+      success: true,
+      message: "Reply added successfully",
+      ticket: updatedTicket,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to add reply",
       error: error.message,
     });
   }

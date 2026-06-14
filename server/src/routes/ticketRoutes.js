@@ -8,6 +8,7 @@ const {
   getTicketById,
   assignTicket,
   updateTicketStatus,
+  addReply,
 } = require("../controllers/ticketController");
 const {
   protect,
@@ -83,5 +84,25 @@ router.patch(
   ],
   updateTicketStatus
 );
+
+router.post(
+  "/:id/replies",
+  [
+    param("id").isMongoId().withMessage("Invalid ticket ID"),
+    body("message")
+      .trim()
+      .notEmpty()
+      .withMessage("Reply message is required")
+      .isLength({ min: 1, max: 3000 })
+      .withMessage("Reply must be between 1 and 3000 characters"),
+
+    body("isInternalNote")
+      .optional()
+      .isBoolean()
+      .withMessage("isInternalNote must be true or false"),
+  ],
+  addReply
+);
+
 
 module.exports = router;

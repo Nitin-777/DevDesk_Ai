@@ -1,5 +1,28 @@
 const mongoose = require("mongoose");
 
+
+const replySchema = new mongoose.Schema(
+  {
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    message: {
+      type: String,
+      required: [true, "Reply message is required"],
+      trim: true,
+      minlength: [1, "Reply message cannot be empty"],
+      maxlength: [3000, "Reply message cannot exceed 3000 characters"],
+    },
+    isInternalNote: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { timestamps: true }
+);
+
 const ticketSchema = new mongoose.Schema(
   {
     title: {
@@ -56,6 +79,7 @@ const ticketSchema = new mongoose.Schema(
         trim: true,
       },
     ],
+    replies: [replySchema],
     resolvedAt: {
       type: Date,
       default: null,
