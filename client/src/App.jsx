@@ -7,6 +7,7 @@ import AgentDashboard from "./pages/AgentDashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 import { getDashboardPath } from "./utils/roleRedirect";
+import CreateTicket from "./pages/CreateTicket";
 
 const HomeRedirect = () => {
   const { user } = useAuth();
@@ -31,6 +32,14 @@ const App = () => {
           </ProtectedRoute>
         }
       />
+       <Route
+        path="/tickets/new"
+        element={
+          <ProtectedRoute roles={["customer"]}>
+            <CreateTicket />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/admin"
@@ -49,6 +58,7 @@ const App = () => {
           </ProtectedRoute>
         }
       />
+           
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
