@@ -1,7 +1,7 @@
-import { Headphones } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-const AgentDashboard = () => {
+const AdminDashboard = () => {
   const { user, logout } = useAuth();
 
   return (
@@ -9,12 +9,12 @@ const AgentDashboard = () => {
       <section className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-4 rounded-lg bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-500">Agent</p>
+            <p className="text-sm font-medium text-gray-500">Admin</p>
             <h1 className="mt-1 text-2xl font-semibold text-gray-900">
               Welcome, {user?.name}
             </h1>
             <p className="mt-1 text-sm text-gray-500">
-              Handle assigned tickets and support conversations.
+              Manage tickets, assignments, users, and analytics.
             </p>
           </div>
 
@@ -27,12 +27,12 @@ const AgentDashboard = () => {
         </div>
 
         <div className="mt-6 rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center">
-          <Headphones className="mx-auto text-gray-500" size={34} />
+          <BarChart3 className="mx-auto text-gray-500" size={34} />
           <h2 className="mt-3 text-lg font-semibold text-gray-900">
-            Agent dashboard ready
+            Admin dashboard ready
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            Next we will show assigned tickets and reply actions.
+            Next we will connect analytics APIs and ticket assignment.
           </p>
         </div>
       </section>
@@ -40,4 +40,4 @@ const AgentDashboard = () => {
   );
 };
 
-export default AgentDashboard;
+export default AdminDashboard;
