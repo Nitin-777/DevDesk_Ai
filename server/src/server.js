@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const ticketRoutes = require("./routes/ticketRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 
 dotenv.config();
 
@@ -39,6 +40,8 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/tickets", ticketRoutes);
+app.use("/api/analytics", analyticsRoutes);
+
 app.use((req, res) => {
   res.status(404).json({
     success: false,
