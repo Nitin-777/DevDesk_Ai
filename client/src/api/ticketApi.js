@@ -23,3 +23,7 @@ export const updateTicketStatus = async (ticketId, status) => {
   const { data } = await api.patch(`/tickets/${ticketId}/status`, { status });
   return data.ticket;
 };
+export const getAssignedTickets = async () => {
+  const { data } = await api.get("/tickets/assigned");
+  return data.tickets;
+};
