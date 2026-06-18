@@ -7,6 +7,7 @@ import AgentDashboard from "./pages/AgentDashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 import { getDashboardPath } from "./utils/roleRedirect";
+import TicketDetails from "./pages/TicketDetails";
 import CreateTicket from "./pages/CreateTicket";
 
 const HomeRedirect = () => {

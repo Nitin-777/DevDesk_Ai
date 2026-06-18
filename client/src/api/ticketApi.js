@@ -19,3 +19,7 @@ export const addTicketReply = async (ticketId, replyData) => {
   const { data } = await api.post(`/tickets/${ticketId}/replies`, replyData);
   return data.ticket;
 };
+export const updateTicketStatus = async (ticketId, status) => {
+  const { data } = await api.patch(`/tickets/${ticketId}/status`, { status });
+  return data.ticket;
+};
