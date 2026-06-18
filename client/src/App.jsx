@@ -32,14 +32,14 @@ const App = () => {
           </ProtectedRoute>
         }
       />
-       <Route
-        path="/tickets/new"
-        element={
-          <ProtectedRoute roles={["customer"]}>
-            <CreateTicket />
-          </ProtectedRoute>
-        }
-      />
+      <Route
+  path="/tickets/:id"
+  element={
+    <ProtectedRoute roles={["customer", "agent", "admin"]}>
+      <TicketDetails />
+    </ProtectedRoute>
+  }
+/>
 
       <Route
         path="/admin"

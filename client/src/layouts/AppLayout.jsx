@@ -5,16 +5,24 @@ import { useAuth } from "../context/AuthContext";
 const AppLayout = ({ children }) => {
   const { user, logout } = useAuth();
 
-  const navItems = [
+ const navItemsByRole = {
+  customer: [
     { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
     { label: "New Ticket", to: "/tickets/new", icon: PlusCircle },
-  ];
+  ],
+  agent: [{ label: "Dashboard", to: "/agent", icon: LayoutDashboard }],
+  admin: [{ label: "Dashboard", to: "/admin", icon: LayoutDashboard }],
+};
 
+const navItems = navItemsByRole[user?.role] || [];
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link to="/dashboard" className="flex items-center gap-2">
+            <Link
+      to={user?.role === "admin" ? "/admin" : user?.role === "agent" ? "/agent" : "/dashboard"}
+      className="flex items-center gap-2"
+    >
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-900 text-white">
               <Headphones size={20} />
             </span>
