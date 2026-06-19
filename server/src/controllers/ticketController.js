@@ -78,8 +78,9 @@ exports.createTicket = async (req, res) => {
 exports.getMyTickets = async (req, res) => {
   try {
     const tickets = await Ticket.find({ customer: req.user._id })
-      .populate("assignedAgent", "name email role")
-      .sort({ createdAt: -1 });
+  .select("-replies")
+  .populate("assignedAgent", "name email role")
+  .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -155,7 +156,8 @@ exports.getTicketById = async (req, res) => {
 
     const ticket = await Ticket.findById(req.params.id)
       .populate("customer", "name email role")
-      .populate("assignedAgent", "name email role");
+      .populate("assignedAgent", "name email role")
+      .populate("replies.sender", "name email role");
 
     if (!ticket) {
       return res.status(404).json({
@@ -171,9 +173,17 @@ exports.getTicketById = async (req, res) => {
       });
     }
 
+    const safeTicket = ticket.toObject();
+
+    if (req.user.role === "customer") {
+      safeTicket.replies = safeTicket.replies.filter(
+        (reply) => !reply.isInternalNote
+      );
+    }
+
     res.status(200).json({
       success: true,
-      ticket,
+      ticket: safeTicket,
     });
   } catch (error) {
     res.status(500).json({

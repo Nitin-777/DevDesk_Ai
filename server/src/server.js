@@ -1,6 +1,7 @@
+const dotenv = require("dotenv");
+dotenv.config();
 const express = require("express");
 const cors = require("cors");
-const dotenv = require("dotenv");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
@@ -10,8 +11,6 @@ const ticketRoutes = require("./routes/ticketRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const userRoutes = require("./routes/userRoutes");
 const aiRoutes = require("./routes/aiRoutes");
-
-dotenv.config();
 
 connectDB();
 
