@@ -379,11 +379,20 @@ exports.addReply = async (req, res) => {
       .populate("assignedAgent", "name email role")
       .populate("replies.sender", "name email role");
 
-    res.status(201).json({
-      success: true,
-      message: "Reply added successfully",
-      ticket: updatedTicket,
-    });
+     const safeTicket = updatedTicket.toObject();
+
+      if (req.user.role === "customer") {
+        safeTicket.replies = safeTicket.replies.filter(
+          (reply) => !reply.isInternalNote
+        );
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "Reply added successfully",
+        ticket: safeTicket,
+      });
+
   } catch (error) {
     res.status(500).json({
       success: false,
