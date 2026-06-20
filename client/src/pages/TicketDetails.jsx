@@ -30,6 +30,7 @@ const TicketDetails = () => {
   const queryClient = useQueryClient();
 
   const [message, setMessage] = useState("");
+  const [isInternalNote, setIsInternalNote] = useState(false);
   const [error, setError] = useState("");
 
   const {
@@ -52,13 +53,15 @@ const TicketDetails = () => {
 
   const replyMutation = useMutation({
     mutationFn: () =>
-      addTicketReply(id, {
-        message: message.trim(),
-      }),
+  addTicketReply(id, {
+    message: message.trim(),
+    isInternalNote: canUseAI ? isInternalNote : false,
+  }),
     onSuccess: () => {
       setMessage("");
       setError("");
       invalidateTicketQueries();
+      setIsInternalNote(false);
     },
     onError: (err) => {
       const validationErrors = err.response?.data?.errors;
@@ -97,10 +100,11 @@ const TicketDetails = () => {
 
   const suggestionMutation = useMutation({
     mutationFn: () => suggestTicketReply(id),
-    onSuccess: (suggestedReply) => {
-      setMessage(suggestedReply);
-      setError("");
-    },
+   onSuccess: (suggestedReply) => {
+  setMessage(suggestedReply);
+  setIsInternalNote(false);
+  setError("");
+},
     onError: (err) => {
       setError(
         err.response?.data?.message || "AI reply suggestion failed"
