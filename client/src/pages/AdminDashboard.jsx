@@ -12,6 +12,7 @@ import {
 import AppLayout from "../layouts/AppLayout";
 import PriorityBadge from "../components/PriorityBadge";
 import StatusBadge from "../components/StatusBadge";
+import AnalyticsCharts from "../components/AnalyticsCharts";
 import {
   assignTicket,
   getAgents,
@@ -36,6 +37,7 @@ const StatCard = ({ label, value, icon: Icon }) => {
     </div>
   );
 };
+
 
 const AdminDashboard = () => {
   const queryClient = useQueryClient();
@@ -122,6 +124,7 @@ const AdminDashboard = () => {
             />
           </div>
         )}
+        <AnalyticsCharts />
 
         <div className="rounded-lg bg-white shadow-sm">
           <div className="border-b border-gray-200 px-5 py-4">
