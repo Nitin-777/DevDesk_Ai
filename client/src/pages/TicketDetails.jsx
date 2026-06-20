@@ -53,15 +53,17 @@ const TicketDetails = () => {
 
   const replyMutation = useMutation({
     mutationFn: () =>
-  addTicketReply(id, {
-    message: message.trim(),
-    isInternalNote: canUseAI ? isInternalNote : false,
-  }),
+      addTicketReply(id, {
+        message: message.trim(),
+        isInternalNote: ["agent", "admin"].includes(user?.role)
+          ? isInternalNote
+          : false,
+      }),
     onSuccess: () => {
       setMessage("");
+      setIsInternalNote(false);
       setError("");
       invalidateTicketQueries();
-      setIsInternalNote(false);
     },
     onError: (err) => {
       const validationErrors = err.response?.data?.errors;
@@ -100,11 +102,11 @@ const TicketDetails = () => {
 
   const suggestionMutation = useMutation({
     mutationFn: () => suggestTicketReply(id),
-   onSuccess: (suggestedReply) => {
-  setMessage(suggestedReply);
-  setIsInternalNote(false);
-  setError("");
-},
+    onSuccess: (suggestedReply) => {
+      setMessage(suggestedReply);
+      setIsInternalNote(false);
+      setError("");
+    },
     onError: (err) => {
       setError(
         err.response?.data?.message || "AI reply suggestion failed"
@@ -155,10 +157,8 @@ const TicketDetails = () => {
 
   const isClosed = ticket.status === "closed";
   const canClose = user?.role === "customer" && !isClosed;
-
   const canManageTicket =
     ["agent", "admin"].includes(user?.role) && !isClosed;
-
   const canUseAI = ["agent", "admin"].includes(user?.role);
 
   const visibleReplies =
@@ -396,23 +396,47 @@ const TicketDetails = () => {
               onSubmit={handleReply}
               className="border-t border-gray-200 p-5"
             >
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                {canUseAI && (
+                  <button
+                    type="button"
+                    onClick={() => suggestionMutation.mutate()}
+                    disabled={suggestionMutation.isPending}
+                    className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <WandSparkles size={16} />
+                    {suggestionMutation.isPending
+                      ? "Generating..."
+                      : "Suggest reply"}
+                  </button>
+                )}
+              </div>
+
               {canUseAI && (
-                <button
-                  type="button"
-                  onClick={() => suggestionMutation.mutate()}
-                  disabled={suggestionMutation.isPending}
-                  className="mb-3 inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <WandSparkles size={16} />
-                  {suggestionMutation.isPending
-                    ? "Generating..."
-                    : "Suggest reply"}
-                </button>
+                <label className="mb-4 flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={isInternalNote}
+                    onChange={(event) =>
+                      setIsInternalNote(event.target.checked)
+                    }
+                    className="mt-1 h-4 w-4 rounded border-gray-300"
+                  />
+
+                  <span>
+                    <span className="block text-sm font-medium text-gray-800">
+                      Internal note
+                    </span>
+                    <span className="block text-xs text-gray-500">
+                      Visible only to agents and administrators.
+                    </span>
+                  </span>
+                </label>
               )}
 
               <label className="block">
                 <span className="text-sm font-medium text-gray-700">
-                  Add reply
+                  {isInternalNote ? "Add internal note" : "Add reply"}
                 </span>
 
                 <textarea
@@ -420,8 +444,16 @@ const TicketDetails = () => {
                   onChange={(event) => setMessage(event.target.value)}
                   rows={4}
                   maxLength={3000}
-                  className="mt-1 w-full resize-y rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900"
-                  placeholder="Write your reply..."
+                  className={`mt-1 w-full resize-y rounded-md border px-3 py-2 text-sm outline-none ${
+                    isInternalNote
+                      ? "border-amber-300 bg-amber-50 focus:border-amber-600"
+                      : "border-gray-300 focus:border-gray-900"
+                  }`}
+                  placeholder={
+                    isInternalNote
+                      ? "Write a private note for the support team..."
+                      : "Write your reply..."
+                  }
                 />
               </label>
 
@@ -433,10 +465,16 @@ const TicketDetails = () => {
                 <button
                   type="submit"
                   disabled={replyMutation.isPending || !message.trim()}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-gray-900 px-4 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-500 sm:w-auto"
+                  className={`inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-500 sm:w-auto ${
+                    isInternalNote ? "bg-amber-700" : "bg-gray-900"
+                  }`}
                 >
                   <Send size={17} />
-                  {replyMutation.isPending ? "Sending..." : "Send reply"}
+                  {replyMutation.isPending
+                    ? "Sending..."
+                    : isInternalNote
+                      ? "Add internal note"
+                      : "Send reply"}
                 </button>
               </div>
             </form>
