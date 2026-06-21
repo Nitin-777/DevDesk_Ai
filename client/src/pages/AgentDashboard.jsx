@@ -12,6 +12,9 @@ const AgentDashboard = () => {
     queryFn: getAssignedTickets,
   });
 
+  const activeTickets = tickets.filter((ticket) =>
+    ["assigned", "in-progress"].includes(ticket.status)
+  );
 
   const resolvedTickets = tickets.filter(
     (ticket) => ticket.status === "resolved"
