@@ -1,15 +1,15 @@
 const styles = {
-  open: "bg-blue-50 text-blue-700 border-blue-200",
-  assigned: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  "in-progress": "bg-yellow-50 text-yellow-700 border-yellow-200",
-  resolved: "bg-green-50 text-green-700 border-green-200",
-  closed: "bg-gray-100 text-gray-700 border-gray-300",
+  open: "bg-[#e8f1f5] text-[#285a70]",
+  assigned: "bg-[#eeeaf6] text-[#5a4777]",
+  "in-progress": "bg-[#f7efd9] text-[#795f1f]",
+  resolved: "bg-[#dfeee7] text-[#28604d]",
+  closed: "bg-[#e8ebe9] text-[#5d6763]",
 };
 
 const StatusBadge = ({ status }) => {
   return (
     <span
-      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${
+      className={`inline-flex rounded px-2 py-1 text-[11px] font-semibold capitalize ${
         styles[status] || styles.open
       }`}
     >

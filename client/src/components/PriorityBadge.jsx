@@ -1,18 +1,18 @@
 const styles = {
-  low: "bg-gray-50 text-gray-700 border-gray-200",
-  medium: "bg-sky-50 text-sky-700 border-sky-200",
-  high: "bg-orange-50 text-orange-700 border-orange-200",
-  urgent: "bg-red-50 text-red-700 border-red-200",
+  low: "text-[#66716d]",
+  medium: "text-[#37677a]",
+  high: "text-[#9a5b22]",
+  urgent: "text-[#a33a35]",
 };
 
 const PriorityBadge = ({ priority }) => {
   return (
     <span
-      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${
+      className={`inline-flex items-center text-[11px] font-semibold uppercase ${
         styles[priority] || styles.medium
       }`}
     >
-      {priority}
+      {priority} priority
     </span>
   );
 };
