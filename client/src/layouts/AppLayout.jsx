@@ -1,58 +1,103 @@
 import { Link, NavLink } from "react-router-dom";
-import { Headphones, LayoutDashboard, LogOut, PlusCircle } from "lucide-react";
+import {
+  Headphones,
+  LayoutDashboard,
+  LogOut,
+  PlusCircle,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "../components/NotificationBell";
 
 const AppLayout = ({ children }) => {
   const { user, logout } = useAuth();
 
- const navItemsByRole = {
-  customer: [
-    { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-    { label: "New Ticket", to: "/tickets/new", icon: PlusCircle },
-  ],
-  agent: [{ label: "Dashboard", to: "/agent", icon: LayoutDashboard }],
-  admin: [{ label: "Dashboard", to: "/admin", icon: LayoutDashboard }],
-};
+  const navItemsByRole = {
+    customer: [
+      {
+        label: "Dashboard",
+        to: "/dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        label: "New Ticket",
+        to: "/tickets/new",
+        icon: PlusCircle,
+      },
+    ],
+    agent: [
+      {
+        label: "Dashboard",
+        to: "/agent",
+        icon: LayoutDashboard,
+      },
+    ],
+    admin: [
+      {
+        label: "Dashboard",
+        to: "/admin",
+        icon: LayoutDashboard,
+      },
+    ],
+  };
 
-const navItems = navItemsByRole[user?.role] || [];
+  const navItems = navItemsByRole[user?.role] || [];
+
+  const dashboardPath =
+    user?.role === "admin"
+      ? "/admin"
+      : user?.role === "agent"
+        ? "/agent"
+        : "/dashboard";
+
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-            <Link
-      to={user?.role === "admin" ? "/admin" : user?.role === "agent" ? "/agent" : "/dashboard"}
-      className="flex items-center gap-2"
-    >
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-900 text-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4">
+          <Link
+            to={dashboardPath}
+            className="flex min-w-0 items-center gap-2"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-900 text-white">
               <Headphones size={20} />
             </span>
-            <span className="text-lg font-semibold text-gray-900">
+
+            <span className="truncate text-lg font-semibold text-gray-900">
               DevDesk AI
             </span>
           </Link>
 
-          <button
-            onClick={logout}
-            className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
+          <div className="flex shrink-0 items-center gap-3">
+            <NotificationBell />
+
+            <button
+              type="button"
+              onClick={logout}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <LogOut size={16} />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 md:grid-cols-[220px_1fr]">
+      <div className="mx-auto grid max-w-6xl gap-4 px-4 py-4 md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 md:py-6">
         <aside className="rounded-lg bg-white p-3 shadow-sm">
           <div className="mb-3 rounded-md bg-gray-50 px-3 py-2">
             <p className="text-xs font-medium uppercase text-gray-500">
               {user?.role}
             </p>
+
             <p className="truncate text-sm font-semibold text-gray-900">
               {user?.name}
             </p>
+
+            <p className="truncate text-xs text-gray-500">
+              {user?.email}
+            </p>
           </div>
 
-          <nav className="space-y-1">
+          <nav className="flex gap-2 overflow-x-auto md:block md:space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
 
@@ -60,8 +105,9 @@ const navItems = navItemsByRole[user?.role] || [];
                 <NavLink
                   key={item.to}
                   to={item.to}
+                  end={item.to === dashboardPath}
                   className={({ isActive }) =>
-                    `flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${
+                    `flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium md:w-full ${
                       isActive
                         ? "bg-gray-900 text-white"
                         : "text-gray-600 hover:bg-gray-100"
@@ -76,7 +122,7 @@ const navItems = navItemsByRole[user?.role] || [];
           </nav>
         </aside>
 
-        <main>{children}</main>
+        <main className="min-w-0">{children}</main>
       </div>
     </div>
   );
