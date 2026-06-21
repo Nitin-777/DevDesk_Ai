@@ -5,9 +5,19 @@ export const getOverviewStats = async () => {
   return data.stats;
 };
 
-export const getAllTickets = async () => {
-  const { data } = await api.get("/tickets/all");
-  return data.tickets;
+export const getAllTickets = async (filters = {}) => {
+  const { data } = await api.get("/tickets/all", {
+    params: filters,
+  });
+
+  return {
+    tickets: data.tickets,
+    pagination: data.pagination,
+  };
+};
+export const createAgent = async (agentData) => {
+  const { data } = await api.post("/users/agents", agentData);
+  return data.agent;
 };
 
 export const getAgents = async () => {
