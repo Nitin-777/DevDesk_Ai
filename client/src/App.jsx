@@ -34,6 +34,14 @@ const App = () => {
         }
       />
       <Route
+  path="/tickets/new"
+  element={
+    <ProtectedRoute roles={["customer"]}>
+      <CreateTicket />
+    </ProtectedRoute>
+  }
+/>
+      <Route
   path="/tickets/:id"
   element={
     <ProtectedRoute roles={["customer", "agent", "admin"]}>
