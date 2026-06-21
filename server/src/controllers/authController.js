@@ -30,7 +30,7 @@ exports.register = async (req, res) => {
       });
     }
 
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
 
@@ -41,16 +41,19 @@ exports.register = async (req, res) => {
       });
     }
 
-    const safeRole = ["customer", "agent"].includes(role) ? role : "customer";
-
     const user = await User.create({
       name,
       email,
       password,
-      role: safeRole,
+      role: "customer",
     });
 
-    sendAuthResponse(res, user, 201, "User registered successfully");
+    sendAuthResponse(
+      res,
+      user,
+      201,
+      "User registered successfully"
+    );
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -103,6 +106,12 @@ exports.login = async (req, res) => {
 exports.getMe = async (req, res) => {
   res.status(200).json({
     success: true,
-    user: req.user,
+    user: {
+      id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+      isActive: req.user.isActive,
+    },
   });
 };

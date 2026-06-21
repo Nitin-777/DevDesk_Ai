@@ -134,22 +134,78 @@ exports.getAssignedTickets = async (req, res) => {
 
 exports.getAllTickets = async (req, res) => {
   try {
-    const { status, priority, category } = req.query;
+    const {
+      status,
+      priority,
+      category,
+      assignedAgent,
+      search = "",
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const pageNumber = Math.max(Number.parseInt(page, 10) || 1, 1);
+    const limitNumber = Math.min(
+      Math.max(Number.parseInt(limit, 10) || 10, 1),
+      50
+    );
+
     const filter = {};
 
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
     if (category) filter.category = category;
 
-    const tickets = await Ticket.find(filter)
-      .populate("customer", "name email role")
-      .populate("assignedAgent", "name email role")
-      .sort({ createdAt: -1 });
+    if (
+      assignedAgent &&
+      mongoose.Types.ObjectId.isValid(assignedAgent)
+    ) {
+      filter.assignedAgent = assignedAgent;
+    }
+
+    if (search.trim()) {
+      const escapedSearch = search
+        .trim()
+        .slice(0, 100)
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      const searchRegex = new RegExp(escapedSearch, "i");
+
+      filter.$or = [
+        { title: searchRegex },
+        { description: searchRegex },
+        { tags: searchRegex },
+      ];
+    }
+
+    const [tickets, totalTickets] = await Promise.all([
+      Ticket.find(filter)
+        .select("-replies")
+        .populate("customer", "name email role")
+        .populate("assignedAgent", "name email role")
+        .sort({ createdAt: -1 })
+        .skip((pageNumber - 1) * limitNumber)
+        .limit(limitNumber),
+
+      Ticket.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.max(
+      Math.ceil(totalTickets / limitNumber),
+      1
+    );
 
     res.status(200).json({
       success: true,
-      count: tickets.length,
       tickets,
+      pagination: {
+        currentPage: pageNumber,
+        totalPages,
+        totalTickets,
+        limit: limitNumber,
+        hasNextPage: pageNumber < totalPages,
+        hasPreviousPage: pageNumber > 1,
+      },
     });
   } catch (error) {
     res.status(500).json({

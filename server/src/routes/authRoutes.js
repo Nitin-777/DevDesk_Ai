@@ -21,18 +21,17 @@ router.post(
 
     body("email")
       .trim()
+      .notEmpty()
+      .withMessage("Email is required")
       .isEmail()
       .withMessage("Please provide a valid email")
       .normalizeEmail(),
 
     body("password")
-      .isLength({ min: 6 })
-      .withMessage("Password must be at least 6 characters"),
-
-    body("role")
-      .optional()
-      .isIn(["customer", "agent"])
-      .withMessage("Role must be customer or agent"),
+      .isString()
+      .withMessage("Password must be a string")
+      .isLength({ min: 8, max: 72 })
+      .withMessage("Password must be between 8 and 72 characters"),
   ],
   register
 );
@@ -42,11 +41,17 @@ router.post(
   [
     body("email")
       .trim()
+      .notEmpty()
+      .withMessage("Email is required")
       .isEmail()
       .withMessage("Please provide a valid email")
       .normalizeEmail(),
 
-    body("password").notEmpty().withMessage("Password is required"),
+    body("password")
+      .notEmpty()
+      .withMessage("Password is required")
+      .isString()
+      .withMessage("Password must be a string"),
   ],
   login
 );
