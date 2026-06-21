@@ -11,6 +11,7 @@ const ticketRoutes = require("./routes/ticketRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const userRoutes = require("./routes/userRoutes");
 const aiRoutes = require("./routes/aiRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 connectDB();
 
@@ -44,6 +45,7 @@ app.use("/api/tickets", ticketRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use((req, res) => {
   res.status(404).json({

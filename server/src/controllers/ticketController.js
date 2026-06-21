@@ -2,16 +2,29 @@ const { validationResult } = require("express-validator");
 const mongoose = require("mongoose");
 const Ticket = require("../models/Ticket");
 const User = require("../models/User");
+const {
+  createNotification,
+  notifyAdmins,
+} = require("../services/notificationService");
+
+const getId = (value) => {
+  if (!value) return null;
+  return (value._id || value).toString();
+};
+
+const ownsResource = (user, owner) => {
+  return getId(user) === getId(owner);
+};
 
 const canAccessTicket = (user, ticket) => {
   if (user.role === "admin") return true;
 
   if (user.role === "customer") {
-    return ticket.customer._id.toString() === user._id.toString();
+    return ownsResource(user, ticket.customer);
   }
 
-  if (user.role === "agent" && ticket.assignedAgent) {
-    return ticket.assignedAgent._id.toString() === user._id.toString();
+  if (user.role === "agent") {
+    return ownsResource(user, ticket.assignedAgent);
   }
 
   return false;
@@ -19,31 +32,26 @@ const canAccessTicket = (user, ticket) => {
 
 const canReplyToTicket = (user, ticket) => {
   if (ticket.status === "closed") return false;
+  return canAccessTicket(user, ticket);
+};
 
-  if (user.role === "admin") return true;
+const sendValidationErrors = (req, res) => {
+  const errors = validationResult(req);
 
-  if (user.role === "customer") {
-    return ticket.customer._id.toString() === user._id.toString();
-  }
+  if (errors.isEmpty()) return false;
 
-  if (user.role === "agent" && ticket.assignedAgent) {
-    return ticket.assignedAgent._id.toString() === user._id.toString();
-  }
+  res.status(400).json({
+    success: false,
+    message: "Validation failed",
+    errors: errors.array(),
+  });
 
-  return false;
+  return true;
 };
 
 exports.createTicket = async (req, res) => {
   try {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: errors.array(),
-      });
-    }
+    if (sendValidationErrors(req, res)) return;
 
     const { title, description, category, priority, tags } = req.body;
 
@@ -54,6 +62,12 @@ exports.createTicket = async (req, res) => {
       category: category || "general",
       priority: priority || "medium",
       tags: Array.isArray(tags) ? tags : [],
+    });
+
+    await notifyAdmins({
+      ticket,
+      type: "ticket-created",
+      message: `New ticket created: ${ticket.title}`,
     });
 
     const populatedTicket = await Ticket.findById(ticket._id).populate(
@@ -78,9 +92,9 @@ exports.createTicket = async (req, res) => {
 exports.getMyTickets = async (req, res) => {
   try {
     const tickets = await Ticket.find({ customer: req.user._id })
-  .select("-replies")
-  .populate("assignedAgent", "name email role")
-  .sort({ createdAt: -1 });
+      .select("-replies")
+      .populate("assignedAgent", "name email role")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -98,7 +112,9 @@ exports.getMyTickets = async (req, res) => {
 
 exports.getAssignedTickets = async (req, res) => {
   try {
-    const tickets = await Ticket.find({ assignedAgent: req.user._id })
+    const tickets = await Ticket.find({
+      assignedAgent: req.user._id,
+    })
       .populate("customer", "name email role")
       .sort({ createdAt: -1 });
 
@@ -119,7 +135,6 @@ exports.getAssignedTickets = async (req, res) => {
 exports.getAllTickets = async (req, res) => {
   try {
     const { status, priority, category } = req.query;
-
     const filter = {};
 
     if (status) filter.status = status;
@@ -196,6 +211,8 @@ exports.getTicketById = async (req, res) => {
 
 exports.assignTicket = async (req, res) => {
   try {
+    if (sendValidationErrors(req, res)) return;
+
     const { agentId } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -214,10 +231,10 @@ exports.assignTicket = async (req, res) => {
 
     const agent = await User.findById(agentId);
 
-    if (!agent || agent.role !== "agent") {
+    if (!agent || agent.role !== "agent" || !agent.isActive) {
       return res.status(400).json({
         success: false,
-        message: "Selected user is not a valid agent",
+        message: "Selected user is not an active agent",
       });
     }
 
@@ -227,7 +244,10 @@ exports.assignTicket = async (req, res) => {
         assignedAgent: agentId,
         status: "assigned",
       },
-      { new: true, runValidators: true }
+      {
+        new: true,
+        runValidators: true,
+      }
     )
       .populate("customer", "name email role")
       .populate("assignedAgent", "name email role");
@@ -238,6 +258,13 @@ exports.assignTicket = async (req, res) => {
         message: "Ticket not found",
       });
     }
+
+    await createNotification({
+      user: agent,
+      ticket,
+      type: "ticket-assigned",
+      message: `Ticket assigned to you: ${ticket.title}`,
+    });
 
     res.status(200).json({
       success: true,
@@ -255,6 +282,8 @@ exports.assignTicket = async (req, res) => {
 
 exports.updateTicketStatus = async (req, res) => {
   try {
+    if (sendValidationErrors(req, res)) return;
+
     const { status } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -301,6 +330,24 @@ exports.updateTicketStatus = async (req, res) => {
 
     await ticket.save();
 
+    if (req.user.role === "customer") {
+      if (ticket.assignedAgent) {
+        await createNotification({
+          user: ticket.assignedAgent,
+          ticket,
+          type: "status-updated",
+          message: `Customer changed "${ticket.title}" to ${status}`,
+        });
+      }
+    } else if (ticket.customer) {
+      await createNotification({
+        user: ticket.customer,
+        ticket,
+        type: "status-updated",
+        message: `Ticket "${ticket.title}" changed to ${status}`,
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: "Ticket status updated successfully",
@@ -317,17 +364,10 @@ exports.updateTicketStatus = async (req, res) => {
 
 exports.addReply = async (req, res) => {
   try {
-    const errors = validationResult(req);
+    if (sendValidationErrors(req, res)) return;
 
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: errors.array(),
-      });
-    }
-
-    const { message, isInternalNote } = req.body;
+    const { message } = req.body;
+    const isInternalNote = req.body.isInternalNote === true;
 
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({
@@ -365,34 +405,64 @@ exports.addReply = async (req, res) => {
     ticket.replies.push({
       sender: req.user._id,
       message,
-      isInternalNote: Boolean(isInternalNote),
+      isInternalNote,
     });
 
-    if (ticket.status === "open" && req.user.role !== "customer") {
+    if (
+      ["open", "assigned"].includes(ticket.status) &&
+      req.user.role !== "customer"
+    ) {
       ticket.status = "in-progress";
     }
 
     await ticket.save();
+
+    if (!isInternalNote) {
+      if (req.user.role === "customer") {
+        if (ticket.assignedAgent) {
+          await createNotification({
+            user: ticket.assignedAgent,
+            ticket,
+            type: "new-reply",
+            message: `Customer replied to: ${ticket.title}`,
+          });
+        } else {
+          await notifyAdmins({
+            ticket,
+            type: "new-reply",
+            message: `Customer replied to unassigned ticket: ${ticket.title}`,
+          });
+        }
+      } else if (ticket.customer) {
+        await createNotification({
+          user: ticket.customer,
+          ticket,
+          type: "new-reply",
+          message: `Support replied to: ${ticket.title}`,
+        });
+      }
+    }
 
     const updatedTicket = await Ticket.findById(ticket._id)
       .populate("customer", "name email role")
       .populate("assignedAgent", "name email role")
       .populate("replies.sender", "name email role");
 
-     const safeTicket = updatedTicket.toObject();
+    const safeTicket = updatedTicket.toObject();
 
-      if (req.user.role === "customer") {
-        safeTicket.replies = safeTicket.replies.filter(
-          (reply) => !reply.isInternalNote
-        );
-      }
+    if (req.user.role === "customer") {
+      safeTicket.replies = safeTicket.replies.filter(
+        (reply) => !reply.isInternalNote
+      );
+    }
 
-      res.status(201).json({
-        success: true,
-        message: "Reply added successfully",
-        ticket: safeTicket,
-      });
-
+    res.status(201).json({
+      success: true,
+      message: isInternalNote
+        ? "Internal note added successfully"
+        : "Reply added successfully",
+      ticket: safeTicket,
+    });
   } catch (error) {
     res.status(500).json({
       success: false,

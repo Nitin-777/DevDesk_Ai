@@ -99,7 +99,8 @@ router.post(
     body("isInternalNote")
       .optional()
       .isBoolean()
-      .withMessage("isInternalNote must be true or false"),
+      .withMessage("isInternalNote must be true or false")
+      .toBoolean(),
   ],
   addReply
 );
