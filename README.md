@@ -28,8 +28,7 @@ The Google Gemini API is used as an assistive layer — it auto-classifies incom
 - **Gemini AI Triage** — One-click ticket classification across 5 categories and 4 priority levels, customer sentiment detection, and suggested agent reply drafts.
 - **Real-Time Notifications** — In-app notifications alert the relevant parties on every ticket state change (created, assigned, replied to, status updated).
 - **Admin Analytics Dashboard** — Live charts for ticket status, priority distribution, category breakdown, and per-agent workload, computed via MongoDB aggregation pipelines.
-- **Agent Management** — Admins can create and manage agent accounts directly from the dashboard.
-- **Secure Auth** — JWT-based stateless authentication with bcrypt password hashing, token re-validated against the database on every request.
+
 
 ---
 
