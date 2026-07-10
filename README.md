@@ -270,7 +270,7 @@ If the Gemini API call fails, the endpoints return `HTTP 502` (Bad Gateway) — 
 
 | Customer Dashboard | Agent Dashboard | Admin Dashboard |
 |---|---|---|
-| ![Customer](screenshots/Customer.png) | ![Agent](screenshots/agent.png) | ![Admin](screenshots/admin.png) |
+| ![Customer](screenshots/consumer.png) | ![Agent](screenshots/agent.png) | ![Admin](screenshots/admin.png) |
 | Create and track tickets | Manage assigned tickets with AI assistance | Full analytics and team management |
 
 
